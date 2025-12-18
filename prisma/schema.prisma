@@ -1,0 +1,307 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  DOCTOR
+  NURSE
+  RECEPTIONIST
+  LAB_TECH
+  RADIOLOGY_TECH
+  PHARMACIST
+  CASHIER
+}
+
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum LabRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RadiologyRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum InvoiceItemType {
+  CONSULTATION
+  LAB
+  RADIOLOGY
+  PHARMACY
+  ROOM
+  OTHER
+}
+
+// ================= USERS / STAFF / PATIENTS =================
+
+model User {
+  id             Int       @id @default(autoincrement())
+  fullName       String
+  email          String    @unique
+  password       String
+  phone          String?
+  role           UserRole
+  specialization String?
+  shiftStart     DateTime?
+  shiftEnd       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  doctor Doctor?
+}
+
+model Doctor {
+  id         Int     @id @default(autoincrement())
+  userId     Int     @unique
+  speciality String?
+
+  user         User          @relation(fields: [userId], references: [id])
+  visits       Visit[]
+  appointments Appointment[]
+
+  prescriptions     Prescription[]
+  labRequests       LabRequest[]
+  radiologyRequests RadiologyRequest[]
+}
+
+model Patient {
+  id               Int      @id @default(autoincrement())
+  fullName         String
+  gender           Gender
+  birthDate        DateTime
+  phone            String?
+  address          String?
+  bloodType        String?
+  emergencyContact String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  appointments Appointment[]
+  visits       Visit[]
+  invoices     Invoice[]
+
+  prescriptions     Prescription[]
+  labRequests       LabRequest[]
+  radiologyRequests RadiologyRequest[]
+}
+
+// ================= APPOINTMENTS & VISITS =================
+
+model Appointment {
+  id        Int               @id @default(autoincrement())
+  patientId Int
+  doctorId  Int
+  date      DateTime
+  reason    String?
+  status    AppointmentStatus @default(SCHEDULED)
+  notes     String?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+}
+
+model Visit {
+  id             Int      @id @default(autoincrement())
+  patientId      Int
+  doctorId       Int
+  visitDate      DateTime @default(now())
+  diagnosis      String?
+  chiefComplaint String?
+  notes          String?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  prescriptions     Prescription[]
+  labRequests       LabRequest[]
+  radiologyRequests RadiologyRequest[]
+}
+
+// ================= PHARMACY =================
+
+model Medicine {
+  id             Int       @id @default(autoincrement())
+  name           String
+  category       String?
+  stock          Int       @default(0)
+  price          Decimal
+  expirationDate DateTime?
+
+  prescriptionItems PrescriptionItem[]
+}
+
+model Prescription {
+  id        Int                @id @default(autoincrement())
+  visitId   Int
+  patientId Int
+  doctorId  Int
+  date      DateTime           @default(now())
+  status    PrescriptionStatus @default(ACTIVE)
+  notes     String?
+
+  visit   Visit   @relation(fields: [visitId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  items PrescriptionItem[]
+}
+
+model PrescriptionItem {
+  id             Int     @id @default(autoincrement())
+  prescriptionId Int
+  medicineId     Int
+  dosage         String
+  frequency      String?
+  duration       String?
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id])
+  medicine     Medicine     @relation(fields: [medicineId], references: [id])
+}
+
+// ================= LAB =================
+
+model LabTest {
+  id       Int     @id @default(autoincrement())
+  name     String
+  category String?
+  price    Decimal
+
+  requestItems LabRequestItem[]
+}
+
+model LabRequest {
+  id        Int              @id @default(autoincrement())
+  visitId   Int
+  patientId Int
+  doctorId  Int
+  status    LabRequestStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  notes     String?
+
+  visit   Visit   @relation(fields: [visitId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  items LabRequestItem[]
+}
+
+model LabRequestItem {
+  id             Int       @id @default(autoincrement())
+  requestId      Int
+  testId         Int
+  resultValue    String?
+  unit           String?
+  referenceRange String?
+  resultAt       DateTime?
+  notes          String?
+
+  request LabRequest @relation(fields: [requestId], references: [id])
+  test    LabTest    @relation(fields: [testId], references: [id])
+}
+
+// ================= RADIOLOGY =================
+
+model RadiologyTest {
+  id       Int     @id @default(autoincrement())
+  name     String
+  category String?
+  price    Decimal
+
+  requestItems RadiologyRequestItem[]
+}
+
+model RadiologyRequest {
+  id        Int                    @id @default(autoincrement())
+  visitId   Int
+  patientId Int
+  doctorId  Int
+  status    RadiologyRequestStatus @default(PENDING)
+  createdAt DateTime               @default(now())
+  notes     String?
+
+  visit   Visit   @relation(fields: [visitId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  items RadiologyRequestItem[]
+}
+
+model RadiologyRequestItem {
+  id        Int       @id @default(autoincrement())
+  requestId Int
+  testId    Int
+  imageUrl  String?
+  report    String?
+  resultAt  DateTime?
+  notes     String?
+
+  request RadiologyRequest @relation(fields: [requestId], references: [id])
+  test    RadiologyTest    @relation(fields: [testId], references: [id])
+}
+
+// ================= INVOICES =================
+
+model Invoice {
+  id          Int           @id @default(autoincrement())
+  patientId   Int
+  status      InvoiceStatus @default(PENDING)
+  totalAmount Decimal       @default(0)
+  discount    Decimal       @default(0)
+  finalAmount Decimal       @default(0)
+  createdAt   DateTime      @default(now())
+
+  patient Patient       @relation(fields: [patientId], references: [id])
+  items   InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          Int             @id @default(autoincrement())
+  invoiceId   Int
+  itemType    InvoiceItemType
+  referenceId Int?
+  description String
+  quantity    Int             @default(1)
+  unitPrice   Decimal         @default(0)
+  subTotal    Decimal         @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
