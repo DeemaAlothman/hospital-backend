@@ -18,7 +18,7 @@ export class RadiologyTestsController {
   }
 
   @Post('tests')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RADIOLOGY_TECH')
   create(@Body() createRadiologyTestDto: CreateRadiologyTestDto) {
     return this.radiologyTestsService.create(createRadiologyTestDto);
   }
@@ -30,7 +30,7 @@ export class RadiologyTestsController {
   }
 
   @Patch('tests/:id')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RADIOLOGY_TECH')
   update(@Param('id') id: string, @Body() updateRadiologyTestDto: UpdateRadiologyTestDto) {
     return this.radiologyTestsService.update(+id, updateRadiologyTestDto);
   }

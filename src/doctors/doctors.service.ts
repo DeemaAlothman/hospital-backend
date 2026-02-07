@@ -54,6 +54,10 @@ export class DoctorsService {
   }
 
   async findOne(id: number) {
+    if (!id || isNaN(id)) {
+      throw new BadRequestException('Invalid doctor ID');
+    }
+
     const doctor = await this.prisma.doctor.findUnique({
       where: { id },
       include: { user: true },
@@ -80,6 +84,55 @@ export class DoctorsService {
     await this.findOne(id);
     return this.prisma.doctor.delete({
       where: { id },
+    });
+  }
+
+  async getVisits(
+    id: number,
+    currentUserId: number,
+    currentUserRole: string,
+  ) {
+    await this.findOne(id);
+
+    // إذا لم يكن ADMIN، تحقق من أن الطبيب يطلب زياراته فقط
+    if (currentUserRole !== 'ADMIN') {
+      const currentDoctor = await this.prisma.doctor.findUnique({
+        where: { userId: currentUserId },
+      });
+
+      if (!currentDoctor || currentDoctor.id !== id) {
+        throw new BadRequestException(
+          'You can only access your own visits',
+        );
+      }
+    }
+
+    return this.prisma.visit.findMany({
+      where: { doctorId: id },
+      orderBy: { visitDate: 'desc' },
+      include: {
+        patient: true,
+        doctor: { include: { user: true } },
+      },
+    });
+  }
+
+  async getMyVisits(userId: number) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+    });
+
+    if (!doctor) {
+      throw new NotFoundException('Doctor profile not found for this user');
+    }
+
+    return this.prisma.visit.findMany({
+      where: { doctorId: doctor.id },
+      orderBy: { visitDate: 'desc' },
+      include: {
+        patient: true,
+        doctor: { include: { user: true } },
+      },
     });
   }
 }

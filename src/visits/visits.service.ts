@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateVisitDto } from './dto/create-visit.dto';
 import { UpdateVisitDto } from './dto/update-visit.dto';
 import { QueryVisitsDto } from './dto/query-visits.dto';
+import { CreateMyVisitDto } from './dto/create-my-visit.dto';
 
 @Injectable()
 export class VisitsService {
@@ -20,6 +21,7 @@ export class VisitsService {
 
     const doctor = await this.prisma.doctor.findUnique({
       where: { id: dto.doctorId },
+      include: { user: true },
     });
     if (!doctor) throw new NotFoundException('Doctor not found');
 
@@ -30,20 +32,55 @@ export class VisitsService {
         throw new BadRequestException('Invalid visitDate');
     }
 
-    return this.prisma.visit.create({
-      data: {
-        patientId: dto.patientId,
-        doctorId: dto.doctorId,
-        visitDate,
-        diagnosis: dto.diagnosis,
-        chiefComplaint: dto.chiefComplaint,
-        notes: dto.notes,
-      },
-      include: {
-        patient: true,
-        doctor: { include: { user: true } },
-      },
+    // إنشاء الزيارة والفاتورة معاً (transaction)
+    const result = await this.prisma.$transaction(async (tx) => {
+      // إنشاء الزيارة
+      const visit = await tx.visit.create({
+        data: {
+          patientId: dto.patientId,
+          doctorId: dto.doctorId,
+          visitDate,
+          diagnosis: dto.diagnosis,
+          chiefComplaint: dto.chiefComplaint,
+          notes: dto.notes,
+        },
+        include: {
+          patient: true,
+          doctor: { include: { user: true } },
+        },
+      });
+
+      // سعر الكشفية (من المستخدم أو قيمة افتراضية)
+      const consultationFee = 50; // يمكن أن تكون من إعدادات النظام أو من جدول الدكتور
+
+      // إنشاء الفاتورة
+      const invoice = await tx.invoice.create({
+        data: {
+          patientId: dto.patientId,
+          status: 'PENDING',
+          totalAmount: consultationFee,
+          finalAmount: consultationFee,
+          discount: 0,
+        },
+      });
+
+      // إضافة بند الكشفية للفاتورة
+      await tx.invoiceItem.create({
+        data: {
+          invoiceId: invoice.id,
+          itemType: 'CONSULTATION',
+          referenceId: visit.id,
+          description: `كشفية - د. ${doctor.user.fullName}`,
+          quantity: 1,
+          unitPrice: consultationFee,
+          subTotal: consultationFee,
+        },
+      });
+
+      return visit;
     });
+
+    return result;
   }
 
   findAll(query: QueryVisitsDto) {
@@ -69,6 +106,10 @@ export class VisitsService {
   }
 
   async findOne(id: number) {
+    if (!id || isNaN(id)) {
+      throw new BadRequestException('Invalid visit ID');
+    }
+
     const visit = await this.prisma.visit.findUnique({
       where: { id },
       include: {
@@ -114,5 +155,76 @@ export class VisitsService {
   async remove(id: number) {
     await this.findOne(id);
     return this.prisma.visit.delete({ where: { id } });
+  }
+
+  async createMyVisit(userId: number, dto: CreateMyVisitDto) {
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: dto.patientId },
+    });
+    if (!patient) throw new NotFoundException('Patient not found');
+
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+      include: { user: true },
+    });
+    if (!doctor)
+      throw new NotFoundException('Doctor profile not found for this user');
+
+    let visitDate: Date | undefined;
+    if (dto.visitDate) {
+      visitDate = new Date(dto.visitDate);
+      if (isNaN(visitDate.getTime()))
+        throw new BadRequestException('Invalid visitDate');
+    }
+
+    // إنشاء الزيارة والفاتورة معاً (transaction)
+    const result = await this.prisma.$transaction(async (tx) => {
+      // إنشاء الزيارة
+      const visit = await tx.visit.create({
+        data: {
+          patientId: dto.patientId,
+          doctorId: doctor.id,
+          visitDate,
+          diagnosis: dto.diagnosis,
+          chiefComplaint: dto.chiefComplaint,
+          notes: dto.notes,
+        },
+        include: {
+          patient: true,
+          doctor: { include: { user: true } },
+        },
+      });
+
+      // سعر الكشفية
+      const consultationFee = 50;
+
+      // إنشاء الفاتورة
+      const invoice = await tx.invoice.create({
+        data: {
+          patientId: dto.patientId,
+          status: 'PENDING',
+          totalAmount: consultationFee,
+          finalAmount: consultationFee,
+          discount: 0,
+        },
+      });
+
+      // إضافة بند الكشفية للفاتورة
+      await tx.invoiceItem.create({
+        data: {
+          invoiceId: invoice.id,
+          itemType: 'CONSULTATION',
+          referenceId: visit.id,
+          description: `كشفية - د. ${doctor.user.fullName}`,
+          quantity: 1,
+          unitPrice: consultationFee,
+          subTotal: consultationFee,
+        },
+      });
+
+      return visit;
+    });
+
+    return result;
   }
 }

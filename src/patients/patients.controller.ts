@@ -23,8 +23,8 @@ import { RolesGuard } from '../auth/roles.guard';
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
 
-  // إنشاء مريض: ADMIN + RECEPTIONIST
-  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  // إنشاء مريض: ADMIN + RECEPTIONIST + NURSE
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.NURSE)
   @Post()
   create(@Body() createPatientDto: CreatePatientDto) {
     return this.patientsService.create(createPatientDto);
@@ -44,15 +44,15 @@ export class PatientsController {
     return this.patientsService.findOne(+id);
   }
 
-  // تعديل مريض: ADMIN + RECEPTIONIST
-  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  // تعديل مريض: ADMIN + RECEPTIONIST + NURSE
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.NURSE)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePatientDto: UpdatePatientDto) {
     return this.patientsService.update(+id, updatePatientDto);
   }
 
-  // حذف مريض: ADMIN + RECEPTIONIST
-  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  // حذف مريض: ADMIN + RECEPTIONIST + NURSE
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.NURSE)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.patientsService.remove(+id);

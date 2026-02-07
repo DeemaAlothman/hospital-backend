@@ -4,6 +4,7 @@ import { CreateRadiologyRequestDto } from './dto/create-radiology-request.dto';
 import { AddRadiologyItemDto } from './dto/add-radiology-item.dto';
 import { SubmitRadiologyResultDto } from './dto/submit-radiology-result.dto';
 import { QueryRadiologyRequestsDto } from './dto/query-radiology-requests.dto';
+import { CreateMyRadiologyRequestDto } from './dto/create-my-radiology-request.dto';
 
 @Injectable()
 export class RadiologyRequestsService {
@@ -81,6 +82,10 @@ export class RadiologyRequestsService {
   }
 
   async findOne(id: number) {
+    if (!id || isNaN(id)) {
+      throw new BadRequestException('Invalid radiology request ID');
+    }
+
     const request = await this.prisma.radiologyRequest.findUnique({
       where: { id },
       include: {
@@ -115,16 +120,71 @@ export class RadiologyRequestsService {
 
     const { testIds } = addRadiologyItemDto;
 
-    const items = testIds.map((testId) => ({
-      requestId: id,
-      testId,
-    }));
-
-    await this.prisma.radiologyRequestItem.createMany({
-      data: items,
+    // جلب بيانات الفحوصات
+    const tests = await this.prisma.radiologyTest.findMany({
+      where: { id: { in: testIds } },
     });
 
-    return this.findOne(id);
+    if (tests.length !== testIds.length) {
+      throw new BadRequestException('One or more radiology tests not found');
+    }
+
+    // إضافة الفحوصات وتحديث الفاتورة معاً
+    return this.prisma.$transaction(async (tx) => {
+      // إضافة الفحوصات للطلب
+      const items = testIds.map((testId) => ({
+        requestId: id,
+        testId,
+      }));
+
+      await tx.radiologyRequestItem.createMany({
+        data: items,
+      });
+
+      // البحث عن الفاتورة المعلقة للمريض
+      const invoice = await tx.invoice.findFirst({
+        where: {
+          patientId: request.patientId,
+          status: 'PENDING',
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!invoice) {
+        throw new NotFoundException(
+          'No pending invoice found for this patient',
+        );
+      }
+
+      // إضافة بنود الأشعة للفاتورة
+      let totalRadiologyCost = 0;
+      for (const test of tests) {
+        await tx.invoiceItem.create({
+          data: {
+            invoiceId: invoice.id,
+            itemType: 'RADIOLOGY',
+            referenceId: test.id,
+            description: `أشعة - ${test.name}`,
+            quantity: 1,
+            unitPrice: test.price,
+            subTotal: test.price,
+          },
+        });
+        totalRadiologyCost += Number(test.price);
+      }
+
+      // تحديث الفاتورة
+      const newTotal = Number(invoice.totalAmount) + totalRadiologyCost;
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          totalAmount: newTotal,
+          finalAmount: newTotal - Number(invoice.discount),
+        },
+      });
+
+      return this.findOne(id);
+    });
   }
 
   async submitResults(id: number, submitResultDto: SubmitRadiologyResultDto) {
@@ -183,6 +243,75 @@ export class RadiologyRequestsService {
     return this.prisma.radiologyRequest.update({
       where: { id },
       data: { status: status as any },
+      include: {
+        patient: true,
+        doctor: {
+          include: {
+            user: true,
+          },
+        },
+        items: {
+          include: {
+            test: true,
+          },
+        },
+      },
+    });
+  }
+
+  async createMyRadiologyRequest(userId: number, dto: CreateMyRadiologyRequestDto) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+    });
+    if (!doctor)
+      throw new NotFoundException('Doctor profile not found for this user');
+
+    const visit = await this.prisma.visit.findUnique({
+      where: { id: dto.visitId },
+      include: { patient: true },
+    });
+    if (!visit) throw new NotFoundException('Visit not found');
+
+    if (visit.doctorId !== doctor.id) {
+      throw new BadRequestException(
+        'This visit does not belong to the current doctor',
+      );
+    }
+
+    return this.prisma.radiologyRequest.create({
+      data: {
+        visitId: dto.visitId,
+        patientId: visit.patientId,
+        doctorId: doctor.id,
+        notes: dto.notes,
+        status: 'PENDING',
+      },
+      include: {
+        patient: true,
+        doctor: {
+          include: {
+            user: true,
+          },
+        },
+        items: {
+          include: {
+            test: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getMyRadiologyRequests(userId: number) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+    });
+    if (!doctor)
+      throw new NotFoundException('Doctor profile not found for this user');
+
+    return this.prisma.radiologyRequest.findMany({
+      where: { doctorId: doctor.id },
+      orderBy: { createdAt: 'desc' },
       include: {
         patient: true,
         doctor: {

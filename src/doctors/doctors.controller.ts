@@ -15,6 +15,7 @@ import { UpdateDoctorDto } from './dto/update-doctor.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { GetUser } from '../auth/get-user.decorator';
 
 import { UserRole } from '@prisma/client';
 
@@ -30,15 +31,22 @@ export class DoctorsController {
     return this.doctorsService.create(createDoctorDto);
   }
 
-  // قراءة كل الدكاترة: ADMIN + RECEPTIONIST + DOCTOR
-  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
+  // قراءة كل الدكاترة: ADMIN + RECEPTIONIST + DOCTOR + NURSE
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR, UserRole.NURSE)
   @Get()
   findAll() {
     return this.doctorsService.findAll();
   }
 
+  // الحصول على زيارات الطبيب المسجل دخوله
+  @Roles(UserRole.DOCTOR)
+  @Get('my-visits')
+  getMyVisits(@GetUser() user: any) {
+    return this.doctorsService.getMyVisits(user.userId);
+  }
+
   // قراءة دكتور واحد
-  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR, UserRole.NURSE)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.doctorsService.findOne(+id);
@@ -56,5 +64,12 @@ export class DoctorsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.doctorsService.remove(+id);
+  }
+
+  // الحصول على زيارات الطبيب
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.NURSE, UserRole.RECEPTIONIST)
+  @Get(':id/visits')
+  getVisits(@Param('id') id: string, @GetUser() user: any) {
+    return this.doctorsService.getVisits(+id, user.userId, user.role);
   }
 }

@@ -8,6 +8,7 @@ import { CreateLabRequestDto } from './dto/create-lab-request.dto';
 import { UpdateLabRequestDto } from './dto/update-lab-request.dto';
 import { UpdateLabResultDto } from './dto/update-lab-result.dto';
 import { QueryLabRequestsDto } from './dto/query-lab-requests.dto';
+import { CreateMyLabRequestDto } from './dto/create-my-lab-request.dto';
 import { LabRequestStatus } from '@prisma/client';
 
 @Injectable()
@@ -35,26 +36,77 @@ export class LabRequestsService {
       throw new BadRequestException('One or more lab tests not found');
     }
 
-    return this.prisma.labRequest.create({
-      data: {
-        visitId: dto.visitId,
-        patientId: dto.patientId,
-        doctorId: dto.doctorId,
-        status: LabRequestStatus.PENDING,
-        notes: dto.notes,
-        items: {
-          create: dto.items.map((i) => ({
-            testId: i.testId,
-            notes: i.notes,
-          })),
+    // إنشاء طلب التحليل وإضافة بنود الفاتورة معاً
+    return this.prisma.$transaction(async (tx) => {
+      // إنشاء طلب التحليل
+      const labRequest = await tx.labRequest.create({
+        data: {
+          visitId: dto.visitId,
+          patientId: dto.patientId,
+          doctorId: dto.doctorId,
+          status: LabRequestStatus.PENDING,
+          notes: dto.notes,
+          items: {
+            create: dto.items.map((i) => ({
+              testId: i.testId,
+              notes: i.notes,
+            })),
+          },
         },
-      },
-      include: {
-        patient: true,
-        doctor: { include: { user: true } },
-        visit: true,
-        items: { include: { test: true } },
-      },
+        include: {
+          patient: true,
+          doctor: { include: { user: true } },
+          visit: true,
+          items: { include: { test: true } },
+        },
+      });
+
+      // البحث عن الفاتورة المعلقة للمريض
+      const invoice = await tx.invoice.findFirst({
+        where: {
+          patientId: dto.patientId,
+          status: 'PENDING',
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!invoice) {
+        throw new NotFoundException(
+          'No pending invoice found for this patient',
+        );
+      }
+
+      // إضافة بنود التحاليل للفاتورة
+      let totalLabCost = 0;
+      for (const item of labRequest.items) {
+        const test = tests.find((t) => t.id === item.testId);
+        if (test) {
+          await tx.invoiceItem.create({
+            data: {
+              invoiceId: invoice.id,
+              itemType: 'LAB',
+              referenceId: item.id,
+              description: `تحليل - ${test.name}`,
+              quantity: 1,
+              unitPrice: test.price,
+              subTotal: test.price,
+            },
+          });
+          totalLabCost += Number(test.price);
+        }
+      }
+
+      // تحديث الفاتورة
+      const newTotal = Number(invoice.totalAmount) + totalLabCost;
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          totalAmount: newTotal,
+          finalAmount: newTotal - Number(invoice.discount),
+        },
+      });
+
+      return labRequest;
     });
   }
 
@@ -85,6 +137,10 @@ export class LabRequestsService {
   }
 
   async findOne(id: number) {
+    if (!id || isNaN(id)) {
+      throw new BadRequestException('Invalid lab request ID');
+    }
+
     const req = await this.prisma.labRequest.findUnique({
       where: { id },
       include: {
@@ -151,5 +207,125 @@ export class LabRequestsService {
     await this.findOne(id);
     await this.prisma.labRequestItem.deleteMany({ where: { requestId: id } });
     return this.prisma.labRequest.delete({ where: { id } });
+  }
+
+  async createMyLabRequest(userId: number, dto: CreateMyLabRequestDto) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+    });
+    if (!doctor)
+      throw new NotFoundException('Doctor profile not found for this user');
+
+    const visit = await this.prisma.visit.findUnique({
+      where: { id: dto.visitId },
+      include: { patient: true },
+    });
+    if (!visit) throw new NotFoundException('Visit not found');
+
+    if (visit.doctorId !== doctor.id) {
+      throw new BadRequestException(
+        'This visit does not belong to the current doctor',
+      );
+    }
+
+    const testIds = dto.items.map((i) => i.testId);
+    const tests = await this.prisma.labTest.findMany({
+      where: { id: { in: testIds } },
+    });
+    if (tests.length !== testIds.length) {
+      throw new BadRequestException('One or more lab tests not found');
+    }
+
+    // إنشاء طلب التحليل وإضافة بنود الفاتورة معاً
+    return this.prisma.$transaction(async (tx) => {
+      // إنشاء طلب التحليل
+      const labRequest = await tx.labRequest.create({
+        data: {
+          visitId: dto.visitId,
+          patientId: visit.patientId,
+          doctorId: doctor.id,
+          status: LabRequestStatus.PENDING,
+          notes: dto.notes,
+          items: {
+            create: dto.items.map((i) => ({
+              testId: i.testId,
+              notes: i.notes,
+            })),
+          },
+        },
+        include: {
+          patient: true,
+          doctor: { include: { user: true } },
+          visit: true,
+          items: { include: { test: true } },
+        },
+      });
+
+      // البحث عن الفاتورة المعلقة للمريض
+      const invoice = await tx.invoice.findFirst({
+        where: {
+          patientId: visit.patientId,
+          status: 'PENDING',
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!invoice) {
+        throw new NotFoundException(
+          'No pending invoice found for this patient',
+        );
+      }
+
+      // إضافة بنود التحاليل للفاتورة
+      let totalLabCost = 0;
+      for (const item of labRequest.items) {
+        const test = tests.find((t) => t.id === item.testId);
+        if (test) {
+          await tx.invoiceItem.create({
+            data: {
+              invoiceId: invoice.id,
+              itemType: 'LAB',
+              referenceId: item.id,
+              description: `تحليل - ${test.name}`,
+              quantity: 1,
+              unitPrice: test.price,
+              subTotal: test.price,
+            },
+          });
+          totalLabCost += Number(test.price);
+        }
+      }
+
+      // تحديث الفاتورة
+      const newTotal = Number(invoice.totalAmount) + totalLabCost;
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          totalAmount: newTotal,
+          finalAmount: newTotal - Number(invoice.discount),
+        },
+      });
+
+      return labRequest;
+    });
+  }
+
+  async getMyLabRequests(userId: number) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+    });
+    if (!doctor)
+      throw new NotFoundException('Doctor profile not found for this user');
+
+    return this.prisma.labRequest.findMany({
+      where: { doctorId: doctor.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        patient: true,
+        doctor: { include: { user: true } },
+        visit: true,
+        items: { include: { test: true } },
+      },
+    });
   }
 }

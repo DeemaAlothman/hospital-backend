@@ -37,6 +37,15 @@ export class AuthService {
       },
     });
 
+    // إذا كان المستخدم طبيب، إنشاء سجل في جدول Doctor تلقائياً
+    if (user.role === UserRole.DOCTOR) {
+      await this.prisma.doctor.create({
+        data: {
+          userId: user.id,
+        },
+      });
+    }
+
     const accessToken = await this.signToken(user.id, user.email, user.role);
 
     return {
