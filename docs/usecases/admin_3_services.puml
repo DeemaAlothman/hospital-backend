@@ -1,0 +1,67 @@
+@startuml Admin_Services
+title ADMIN — Laboratory / Radiology / Medicines
+
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam ranksep 60
+skinparam nodesep 30
+skinparam usecase {
+  BackgroundColor #FFF4EE
+  BorderColor #D9734A
+  FontSize 12
+}
+skinparam package {
+  BackgroundColor #FFFBF9
+  BorderColor #D9734A
+  FontSize 13
+  FontStyle bold
+}
+
+actor "Admin" as A #D9734A
+
+package "Laboratory" {
+  (عرض أنواع التحاليل)
+  (إضافة نوع تحليل)
+  (تعديل نوع تحليل)
+  (حذف نوع تحليل)
+  (طلب تحليل)
+  (عرض طلبات التحاليل)
+}
+
+package "Radiology" {
+  (عرض أنواع الأشعة)
+  (إضافة نوع أشعة)
+  (تعديل نوع أشعة)
+  (حذف نوع أشعة)
+  (طلب أشعة)
+  (عرض طلبات الأشعة)
+}
+
+package "Medicines" {
+  (عرض الأدوية)
+  (إضافة دواء)
+  (تعديل دواء)
+  (حذف دواء)
+}
+
+A --> (عرض أنواع التحاليل)
+A --> (إضافة نوع تحليل)
+A --> (تعديل نوع تحليل)
+A --> (حذف نوع تحليل)
+A --> (طلب تحليل)
+A --> (عرض طلبات التحاليل)
+
+A --> (عرض أنواع الأشعة)
+A --> (إضافة نوع أشعة)
+A --> (تعديل نوع أشعة)
+A --> (حذف نوع أشعة)
+A --> (طلب أشعة)
+A --> (عرض طلبات الأشعة)
+
+A --> (عرض الأدوية)
+A --> (إضافة دواء)
+A --> (تعديل دواء)
+A --> (حذف دواء)
+
+@enduml

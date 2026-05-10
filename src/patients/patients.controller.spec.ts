@@ -1,42 +1,34 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { PatientsController } from './patients.controller';
 import { PatientsService } from './patients.service';
-import { CreatePatientDto } from './dto/create-patient.dto';
-import { UpdatePatientDto } from './dto/update-patient.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
-@Controller('patients')
-export class PatientsController {
-  constructor(private readonly patientsService: PatientsService) {}
+const mockPrismaService = {
+  patient: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+};
 
-  @Post()
-  create(@Body() createPatientDto: CreatePatientDto) {
-    return this.patientsService.create(createPatientDto);
-  }
+describe('PatientsController', () => {
+  let controller: PatientsController;
 
-  @Get()
-  findAll() {
-    return this.patientsService.findAll();
-  }
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [PatientsController],
+      providers: [
+        PatientsService,
+        { provide: PrismaService, useValue: mockPrismaService },
+      ],
+    }).compile();
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.patientsService.findOne(+id);
-  }
+    controller = module.get<PatientsController>(PatientsController);
+  });
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePatientDto: UpdatePatientDto) {
-    return this.patientsService.update(+id, updatePatientDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.patientsService.remove(+id);
-  }
-}
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});

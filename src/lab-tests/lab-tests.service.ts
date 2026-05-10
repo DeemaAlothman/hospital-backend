@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLabTestDto } from './dto/create-lab-test.dto';
 import { UpdateLabTestDto } from './dto/update-lab-test.dto';
@@ -43,6 +44,15 @@ export class LabTestsService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.labTest.delete({ where: { id } });
+    try {
+      return await this.prisma.labTest.delete({ where: { id } });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2003') {
+        throw new ConflictException(
+          'Cannot delete lab test that is referenced by existing lab request items',
+        );
+      }
+      throw e;
+    }
   }
 }

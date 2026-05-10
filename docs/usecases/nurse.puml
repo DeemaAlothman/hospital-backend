@@ -1,0 +1,80 @@
+@startuml Nurse_UseCases
+title Use Case Diagram — NURSE
+
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #EEFFF4
+  BorderColor #4AD97A
+}
+skinparam package {
+  BackgroundColor #F9FFFB
+  BorderColor #AAEFBC
+}
+
+actor "Nurse" as N #4AD97A
+
+' ─────────────────────────────
+package "Patients" {
+  (عرض المرضى)
+  (إضافة مريض)
+  (تعديل مريض)
+}
+
+package "Visits" {
+  (عرض الزيارات)
+  (تسجيل زيارة)
+  (تعديل زيارة)
+}
+
+package "Medicines" {
+  (عرض الأدوية)
+}
+
+package "Laboratory" {
+  (عرض أنواع التحاليل)
+  (عرض طلبات التحاليل)
+  (تحديث نتيجة تحليل)
+}
+
+package "Radiology" {
+  (عرض طلبات الأشعة)
+  (تحديث نتيجة أشعة)
+}
+
+package "Rooms & Reservations" {
+  (عرض الغرف)
+  (عرض الحجوزات)
+  (إنشاء حجز)
+  (تعديل حجز)
+  (تفعيل حجز)
+  (إتمام حجز)
+}
+
+' ─────────────────────────────
+N --> (عرض المرضى)
+N --> (إضافة مريض)
+N --> (تعديل مريض)
+
+N --> (عرض الزيارات)
+N --> (تسجيل زيارة)
+N --> (تعديل زيارة)
+
+N --> (عرض الأدوية)
+
+N --> (عرض أنواع التحاليل)
+N --> (عرض طلبات التحاليل)
+N --> (تحديث نتيجة تحليل)
+
+N --> (عرض طلبات الأشعة)
+N --> (تحديث نتيجة أشعة)
+
+N --> (عرض الغرف)
+N --> (عرض الحجوزات)
+N --> (إنشاء حجز)
+N --> (تعديل حجز)
+N --> (تفعيل حجز)
+N --> (إتمام حجز)
+
+@enduml

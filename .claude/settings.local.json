@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(BASE=\"http://localhost:3001\" __NEW_LINE_02fe59e19d0a0e90__ echo \"=== 1. Register ADMIN ===\" curl -s -X POST \"$BASE/auth/register\" -H \"Content-Type: application/json\" -d '{\"\"\"\"fullName\"\"\"\":\"\"\"\"Test Admin\"\"\"\",\"\"\"\"email\"\"\"\":\"\"\"\"testadmin@hospital.com\"\"\"\",\"\"\"\"password\"\"\"\":\"\"\"\"Admin@123456\"\"\"\",\"\"\"\"role\"\"\"\":\"\"\"\"ADMIN\"\"\"\"}')",
+      "Bash(python -m json.tool)"
+    ]
+  }
+}

@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVisitDto } from './dto/create-visit.dto';
 import { UpdateVisitDto } from './dto/update-visit.dto';
@@ -154,7 +156,16 @@ export class VisitsService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.visit.delete({ where: { id } });
+    try {
+      return await this.prisma.visit.delete({ where: { id } });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2003') {
+        throw new ConflictException(
+          'Cannot delete visit with existing prescriptions, lab requests, or radiology requests',
+        );
+      }
+      throw e;
+    }
   }
 
   async createMyVisit(userId: number, dto: CreateMyVisitDto) {

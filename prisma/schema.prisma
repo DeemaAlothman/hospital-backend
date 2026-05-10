@@ -71,6 +71,38 @@ enum InvoiceItemType {
   OTHER
 }
 
+enum RoomType {
+  GENERAL
+  ICU
+  SURGERY
+  CONSULTATION
+  PRIVATE
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  UNDER_MAINTENANCE
+}
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+}
+
+enum ReservationType {
+  PATIENT_STAY
+  SURGERY
+  CONSULTATION
+}
+
+enum ReservationStatus {
+  RESERVED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
 // ================= USERS / STAFF / PATIENTS =================
 
 model User {
@@ -101,6 +133,7 @@ model Doctor {
   prescriptions     Prescription[]
   labRequests       LabRequest[]
   radiologyRequests RadiologyRequest[]
+  roomReservations  RoomReservation[]
 }
 
 model Patient {
@@ -122,6 +155,7 @@ model Patient {
   prescriptions     Prescription[]
   labRequests       LabRequest[]
   radiologyRequests RadiologyRequest[]
+  roomReservations  RoomReservation[]
 }
 
 // ================= APPOINTMENTS & VISITS =================
@@ -137,6 +171,8 @@ model Appointment {
 
   patient Patient @relation(fields: [patientId], references: [id])
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  roomReservations RoomReservation[]
 }
 
 model Visit {
@@ -154,6 +190,7 @@ model Visit {
   prescriptions     Prescription[]
   labRequests       LabRequest[]
   radiologyRequests RadiologyRequest[]
+  roomReservations  RoomReservation[]
 }
 
 // ================= PHARMACY =================
@@ -228,11 +265,12 @@ model LabRequestItem {
   id             Int       @id @default(autoincrement())
   requestId      Int
   testId         Int
-  resultValue    String?
-  unit           String?
-  referenceRange String?
-  resultAt       DateTime?
-  notes          String?
+  resultValue       String?
+  unit              String?
+  referenceRangeMin Decimal?
+  referenceRangeMax Decimal?
+  resultAt          DateTime?
+  notes             String?
 
   request LabRequest @relation(fields: [requestId], references: [id])
   test    LabTest    @relation(fields: [testId], references: [id])
@@ -304,4 +342,57 @@ model InvoiceItem {
   subTotal    Decimal         @default(0)
 
   invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+// ================= ROOMS =================
+
+model Room {
+  id          Int        @id @default(autoincrement())
+  roomNumber  String     @unique
+  type        RoomType
+  floor       Int?
+  status      RoomStatus @default(AVAILABLE)
+  nightlyRate Decimal    @default(0)
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  beds         Bed[]
+  reservations RoomReservation[]
+}
+
+model Bed {
+  id        Int       @id @default(autoincrement())
+  roomId    Int
+  bedNumber String
+  status    BedStatus @default(AVAILABLE)
+
+  room         Room              @relation(fields: [roomId], references: [id])
+  reservations RoomReservation[]
+
+  @@unique([roomId, bedNumber])
+}
+
+model RoomReservation {
+  id              Int               @id @default(autoincrement())
+  roomId          Int
+  bedId           Int?
+  patientId       Int?
+  doctorId        Int
+  visitId         Int?
+  appointmentId   Int?
+  reservationType ReservationType
+  status          ReservationStatus @default(RESERVED)
+  startDate       DateTime
+  endDate         DateTime?
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  room        Room         @relation(fields: [roomId], references: [id])
+  bed         Bed?         @relation(fields: [bedId], references: [id])
+  patient     Patient?     @relation(fields: [patientId], references: [id])
+  doctor      Doctor       @relation(fields: [doctorId], references: [id])
+  visit       Visit?       @relation(fields: [visitId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
 }

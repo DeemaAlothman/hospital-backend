@@ -1,0 +1,63 @@
+@startuml Admin_Finance_Rooms
+title ADMIN — Invoices / Rooms & Reservations
+
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam ranksep 60
+skinparam nodesep 30
+skinparam usecase {
+  BackgroundColor #FFF4EE
+  BorderColor #D9734A
+  FontSize 12
+}
+skinparam package {
+  BackgroundColor #FFFBF9
+  BorderColor #D9734A
+  FontSize 13
+  FontStyle bold
+}
+
+actor "Admin" as A #D9734A
+
+package "Invoices" {
+  (عرض جميع الفواتير)
+  (إنشاء فاتورة)
+  (إضافة بند لفاتورة)
+  (تحصيل فاتورة)
+  (إلغاء فاتورة)
+  (عرض إحصائيات الأقسام)
+}
+
+package "Rooms & Reservations" {
+  (عرض الغرف)
+  (إضافة غرفة)
+  (تعديل غرفة)
+  (حذف غرفة)
+  (عرض الحجوزات)
+  (إنشاء حجز)
+  (تعديل حجز)
+  (تفعيل حجز)
+  (إتمام حجز)
+  (إلغاء حجز)
+}
+
+A --> (عرض جميع الفواتير)
+A --> (إنشاء فاتورة)
+A --> (إضافة بند لفاتورة)
+A --> (تحصيل فاتورة)
+A --> (إلغاء فاتورة)
+A --> (عرض إحصائيات الأقسام)
+
+A --> (عرض الغرف)
+A --> (إضافة غرفة)
+A --> (تعديل غرفة)
+A --> (حذف غرفة)
+A --> (عرض الحجوزات)
+A --> (إنشاء حجز)
+A --> (تعديل حجز)
+A --> (تفعيل حجز)
+A --> (إتمام حجز)
+A --> (إلغاء حجز)
+
+@enduml

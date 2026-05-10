@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InvoiceItemType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { AddInvoiceItemDto } from './dto/add-invoice-item.dto';
@@ -34,27 +35,58 @@ export class InvoicesService {
     });
   }
 
-  async findAll(query: QueryInvoicesDto) {
-    const { status, patientId } = query;
+  async findAll(query: QueryInvoicesDto, forceItemType?: InvoiceItemType) {
+    const { status, patientId, itemType } = query;
 
     const where: any = {};
 
-    if (status) {
-      where.status = status;
+    if (status) where.status = status;
+    if (patientId) where.patientId = patientId;
+
+    const resolvedItemType = forceItemType ?? itemType;
+    if (resolvedItemType) {
+      where.items = { some: { itemType: resolvedItemType } };
     }
 
-    if (patientId) {
-      where.patientId = patientId;
-    }
-
-    return this.prisma.invoice.findMany({
+    const invoices = await this.prisma.invoice.findMany({
       where,
       include: {
         patient: true,
-        items: true,
+        items: resolvedItemType
+          ? { where: { itemType: resolvedItemType } }
+          : true,
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    if (!resolvedItemType) return invoices;
+
+    return invoices.map((inv) => ({
+      ...inv,
+      departmentTotal: inv.items.reduce(
+        (sum, item) => sum + Number(item.subTotal),
+        0,
+      ),
+    }));
+  }
+
+  async getDepartmentStats() {
+    const types = Object.values(InvoiceItemType);
+    const stats = await Promise.all(
+      types.map(async (type) => {
+        const items = await this.prisma.invoiceItem.aggregate({
+          where: { itemType: type },
+          _sum: { subTotal: true },
+          _count: { id: true },
+        });
+        return {
+          department: type,
+          totalRevenue: items._sum.subTotal ?? 0,
+          totalItems: items._count.id,
+        };
+      }),
+    );
+    return stats;
   }
 
   async findOne(id: number) {

@@ -1,0 +1,284 @@
+@startuml Hospital_ERD
+title Hospital Management System — Entity Relationship Diagram
+
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+skinparam entity {
+  BackgroundColor #EEF4FF
+  BorderColor #4A90D9
+  FontSize 11
+}
+skinparam package {
+  BackgroundColor #F5F9FF
+  BorderColor #4A90D9
+  FontSize 13
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #F9A825
+  FontSize 10
+}
+
+' ══════════════════════════════════════
+package "Users & Staff" #F0F8FF {
+
+  entity "User" as user {
+    <b><color:#1565C0>PK</color></b>  id : INT
+    ==
+    fullName : STRING
+    email    : STRING (unique)
+    role     : UserRole
+    phone    : STRING
+  }
+
+  entity "Doctor" as doctor {
+    <b><color:#1565C0>PK</color></b>  id     : INT
+    ==
+    <b><color:#E65100>FK</color></b>  userId : INT → User
+    speciality : STRING
+  }
+
+  entity "Patient" as patient {
+    <b><color:#1565C0>PK</color></b>  id       : INT
+    ==
+    fullName   : STRING
+    gender     : Gender
+    birthDate  : DATE
+    bloodType  : STRING
+  }
+
+}
+
+' ══════════════════════════════════════
+package "Appointments & Visits" #F0FFF0 {
+
+  entity "Appointment" as appointment {
+    <b><color:#1565C0>PK</color></b>  id        : INT
+    ==
+    <b><color:#E65100>FK</color></b>  patientId : INT → Patient
+    <b><color:#E65100>FK</color></b>  doctorId  : INT → Doctor
+    date   : DATETIME
+    status : AppointmentStatus
+  }
+
+  entity "Visit" as visit {
+    <b><color:#1565C0>PK</color></b>  id        : INT
+    ==
+    <b><color:#E65100>FK</color></b>  patientId : INT → Patient
+    <b><color:#E65100>FK</color></b>  doctorId  : INT → Doctor
+    visitDate  : DATETIME
+    diagnosis  : STRING
+  }
+
+}
+
+' ══════════════════════════════════════
+package "Pharmacy" #FFF8F0 {
+
+  entity "Medicine" as medicine {
+    <b><color:#1565C0>PK</color></b>  id   : INT
+    ==
+    name  : STRING
+    stock : INT
+    price : DECIMAL
+  }
+
+  entity "Prescription" as prescription {
+    <b><color:#1565C0>PK</color></b>  id        : INT
+    ==
+    <b><color:#E65100>FK</color></b>  visitId   : INT → Visit
+    <b><color:#E65100>FK</color></b>  patientId : INT → Patient
+    <b><color:#E65100>FK</color></b>  doctorId  : INT → Doctor
+    status : PrescriptionStatus
+  }
+
+  entity "PrescriptionItem" as prescriptionItem {
+    <b><color:#1565C0>PK</color></b>  id             : INT
+    ==
+    <b><color:#E65100>FK</color></b>  prescriptionId : INT → Prescription
+    <b><color:#E65100>FK</color></b>  medicineId     : INT → Medicine
+    dosage    : STRING
+    frequency : STRING
+  }
+
+}
+
+' ══════════════════════════════════════
+package "Laboratory" #F5FFF5 {
+
+  entity "LabTest" as labTest {
+    <b><color:#1565C0>PK</color></b>  id   : INT
+    ==
+    name     : STRING
+    category : STRING
+    price    : DECIMAL
+  }
+
+  entity "LabRequest" as labRequest {
+    <b><color:#1565C0>PK</color></b>  id        : INT
+    ==
+    <b><color:#E65100>FK</color></b>  visitId   : INT → Visit
+    <b><color:#E65100>FK</color></b>  patientId : INT → Patient
+    <b><color:#E65100>FK</color></b>  doctorId  : INT → Doctor
+    status    : LabRequestStatus
+  }
+
+  entity "LabRequestItem" as labRequestItem {
+    <b><color:#1565C0>PK</color></b>  id              : INT
+    ==
+    <b><color:#E65100>FK</color></b>  requestId       : INT → LabRequest
+    <b><color:#E65100>FK</color></b>  testId          : INT → LabTest
+    resultValue       : STRING
+    unit              : STRING
+    referenceRangeMin : DECIMAL
+    referenceRangeMax : DECIMAL
+    resultAt          : DATETIME
+  }
+
+}
+
+' ══════════════════════════════════════
+package "Radiology" #FFF5FF {
+
+  entity "RadiologyTest" as radiologyTest {
+    <b><color:#1565C0>PK</color></b>  id   : INT
+    ==
+    name     : STRING
+    category : STRING
+    price    : DECIMAL
+  }
+
+  entity "RadiologyRequest" as radiologyRequest {
+    <b><color:#1565C0>PK</color></b>  id        : INT
+    ==
+    <b><color:#E65100>FK</color></b>  visitId   : INT → Visit
+    <b><color:#E65100>FK</color></b>  patientId : INT → Patient
+    <b><color:#E65100>FK</color></b>  doctorId  : INT → Doctor
+    status    : RadiologyRequestStatus
+  }
+
+  entity "RadiologyRequestItem" as radiologyRequestItem {
+    <b><color:#1565C0>PK</color></b>  id        : INT
+    ==
+    <b><color:#E65100>FK</color></b>  requestId : INT → RadiologyRequest
+    <b><color:#E65100>FK</color></b>  testId    : INT → RadiologyTest
+    imageUrl : STRING
+    report   : STRING
+  }
+
+}
+
+' ══════════════════════════════════════
+package "Invoices" #FFFBF0 {
+
+  entity "Invoice" as invoice {
+    <b><color:#1565C0>PK</color></b>  id        : INT
+    ==
+    <b><color:#E65100>FK</color></b>  patientId : INT → Patient
+    status      : InvoiceStatus
+    totalAmount : DECIMAL
+    discount    : DECIMAL
+    finalAmount : DECIMAL
+  }
+
+  entity "InvoiceItem" as invoiceItem {
+    <b><color:#1565C0>PK</color></b>  id               : INT
+    ==
+    <b><color:#E65100>FK</color></b>  invoiceId        : INT → Invoice
+    itemType         : InvoiceItemType
+    <i><color:#6A1B9A>~FK</color></i> labRequestId       : INT
+    <i><color:#6A1B9A>~FK</color></i> radiologyRequestId : INT
+    <i><color:#6A1B9A>~FK</color></i> prescriptionId     : INT
+    <i><color:#6A1B9A>~FK</color></i> roomReservationId  : INT
+    description : STRING
+    quantity    : INT
+    unitPrice   : DECIMAL
+    subTotal    : DECIMAL
+  }
+
+}
+
+' ══════════════════════════════════════
+package "Rooms & Reservations" #F0F0FF {
+
+  entity "Room" as room {
+    <b><color:#1565C0>PK</color></b>  id         : INT
+    ==
+    roomNumber  : STRING (unique)
+    type        : RoomType
+    status      : RoomStatus
+    nightlyRate : DECIMAL
+  }
+
+  entity "Bed" as bed {
+    <b><color:#1565C0>PK</color></b>  id     : INT
+    ==
+    <b><color:#E65100>FK</color></b>  roomId : INT → Room
+    bedNumber : STRING
+    status    : BedStatus
+  }
+
+  entity "RoomReservation" as roomReservation {
+    <b><color:#1565C0>PK</color></b>  id            : INT
+    ==
+    <b><color:#E65100>FK</color></b>  roomId        : INT → Room
+    <b><color:#E65100>FK</color></b>  doctorId      : INT → Doctor
+    <color:#777777>FK?</color>        bedId         : INT → Bed
+    <color:#777777>FK?</color>        patientId     : INT → Patient
+    <color:#777777>FK?</color>        visitId       : INT → Visit
+    <color:#777777>FK?</color>        appointmentId : INT → Appointment
+    status    : ReservationStatus
+    startDate : DATETIME
+    endDate   : DATETIME
+  }
+
+}
+
+' ══════════════════════════════════════
+' FK RELATIONSHIPS
+' ══════════════════════════════════════
+
+user             ||--o|  doctor               : ""
+patient          ||--o{  appointment          : ""
+doctor           ||--o{  appointment          : ""
+patient          ||--o{  visit                : ""
+doctor           ||--o{  visit                : ""
+visit            ||--o{  prescription         : ""
+prescription     ||--o{  prescriptionItem     : ""
+medicine         ||--o{  prescriptionItem     : ""
+visit            ||--o{  labRequest           : ""
+labRequest       ||--o{  labRequestItem       : ""
+labTest          ||--o{  labRequestItem       : ""
+visit            ||--o{  radiologyRequest     : ""
+radiologyRequest ||--o{  radiologyRequestItem : ""
+radiologyTest    ||--o{  radiologyRequestItem : ""
+patient          ||--o{  invoice              : ""
+invoice          ||--o{  invoiceItem          : ""
+room             ||--o{  bed                  : ""
+room             ||--o{  roomReservation      : ""
+bed              |o--o{  roomReservation      : ""
+patient          |o--o{  roomReservation      : ""
+doctor           ||--o{  roomReservation      : ""
+visit            |o--o{  roomReservation      : ""
+appointment      |o--o{  roomReservation      : ""
+
+' ══════════════════════════════════════
+' LOGICAL RELATIONSHIPS
+' ══════════════════════════════════════
+
+invoiceItem ..> labRequest       : "LAB"
+invoiceItem ..> radiologyRequest : "RADIOLOGY"
+invoiceItem ..> prescription     : "PHARMACY"
+invoiceItem ..> roomReservation  : "ROOM"
+
+legend right
+  <b>PK</b> = Primary Key (أزرق)
+  <b>FK</b> = Foreign Key حقيقي (برتقالي)
+  <i>~FK</i> = ربط منطقي فقط (بنفسجي)
+  <color:#777777>FK?</color> = Foreign Key اختياري (رمادي)
+  ---- = علاقة FK حقيقية
+  .... = علاقة منطقية
+endlegend
+
+@enduml

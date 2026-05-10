@@ -1,0 +1,116 @@
+@startuml Admin_UseCases_Part2
+title Use Case Diagram — ADMIN\n(Part 2: Laboratory · Radiology · Medicines · Invoices · Rooms & Reservations)
+
+top to bottom direction
+scale max 750 width
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam usecase {
+  BackgroundColor #FFF4EE
+  BorderColor #D9734A
+  FontSize 13
+}
+skinparam package {
+  BackgroundColor #FFFBF9
+  BorderColor #EFCBAE
+  FontSize 14
+  FontStyle bold
+}
+skinparam actor {
+  BackgroundColor #D9734A
+  FontColor #D9734A
+  FontSize 14
+  FontStyle bold
+}
+
+actor "Admin" as A #D9734A
+
+' ─────────────────────────────
+package "Laboratory" {
+  (عرض أنواع التحاليل)
+  (إضافة نوع تحليل)
+  (تعديل نوع تحليل)
+  (حذف نوع تحليل)
+  (طلب تحليل)
+  (عرض طلبات التحاليل)
+}
+
+package "Radiology" {
+  (عرض أنواع الأشعة)
+  (إضافة نوع أشعة)
+  (تعديل نوع أشعة)
+  (حذف نوع أشعة)
+  (طلب أشعة)
+  (عرض طلبات الأشعة)
+}
+
+package "Medicines" {
+  (عرض الأدوية)
+  (إضافة دواء)
+  (تعديل دواء)
+  (حذف دواء)
+}
+
+package "Invoices" {
+  (عرض جميع الفواتير)
+  (إنشاء فاتورة)
+  (إضافة بند لفاتورة)
+  (تحصيل فاتورة)
+  (إلغاء فاتورة)
+  (عرض إحصائيات الأقسام)
+}
+
+package "Rooms & Reservations" {
+  (عرض الغرف)
+  (إضافة غرفة)
+  (تعديل غرفة)
+  (حذف غرفة)
+  (عرض الحجوزات)
+  (إنشاء حجز)
+  (تعديل حجز)
+  (تفعيل حجز)
+  (إتمام حجز)
+  (إلغاء حجز)
+}
+
+' ─────────────────────────────
+A --> (عرض أنواع التحاليل)
+A --> (إضافة نوع تحليل)
+A --> (تعديل نوع تحليل)
+A --> (حذف نوع تحليل)
+A --> (طلب تحليل)
+A --> (عرض طلبات التحاليل)
+
+A --> (عرض أنواع الأشعة)
+A --> (إضافة نوع أشعة)
+A --> (تعديل نوع أشعة)
+A --> (حذف نوع أشعة)
+A --> (طلب أشعة)
+A --> (عرض طلبات الأشعة)
+
+A --> (عرض الأدوية)
+A --> (إضافة دواء)
+A --> (تعديل دواء)
+A --> (حذف دواء)
+
+A --> (عرض جميع الفواتير)
+A --> (إنشاء فاتورة)
+A --> (إضافة بند لفاتورة)
+A --> (تحصيل فاتورة)
+A --> (إلغاء فاتورة)
+A --> (عرض إحصائيات الأقسام)
+
+A --> (عرض الغرف)
+A --> (إضافة غرفة)
+A --> (تعديل غرفة)
+A --> (حذف غرفة)
+A --> (عرض الحجوزات)
+A --> (إنشاء حجز)
+A --> (تعديل حجز)
+A --> (تفعيل حجز)
+A --> (إتمام حجز)
+A --> (إلغاء حجز)
+
+@enduml

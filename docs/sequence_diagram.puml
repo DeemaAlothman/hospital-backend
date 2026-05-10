@@ -1,0 +1,100 @@
+@startuml Sequence_Diagram
+title Hospital System - Patient Visit Flow
+
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+skinparam SequenceArrowThickness 2
+skinparam sequence {
+  ParticipantBackgroundColor #EEF4FF
+  ParticipantBorderColor #4A90D9
+  ParticipantFontStyle bold
+  ArrowColor #333333
+  LifeLineBorderColor #4A90D9
+  NoteBackgroundColor #FFFDE7
+  NoteBorderColor #F9A825
+}
+
+participant "Receptionist" as R
+participant "Doctor"        as D
+participant "Lab Tech"      as L
+participant "Cashier"       as C
+participant "API"           as API
+database    "Database"      as DB
+
+== 1 - تسجيل المريض ==
+
+R  -> API : POST /patients
+API -> DB : INSERT Patient
+DB --> API : patient id=1
+API --> R  : 201 Created
+
+== 2 - حجز موعد ==
+
+R  -> API : POST /appointments
+API -> DB : INSERT Appointment
+DB --> API : appointment id=5
+API --> R  : 201 Created
+
+== 3 - الزيارة الطبية ==
+
+D  -> API : POST /visits
+API -> DB : INSERT Visit
+DB --> API : visit id=10
+API --> D  : 201 Created
+
+== 4 - طلب تحليل ==
+
+D  -> API : POST /lab-requests
+API -> DB : INSERT LabRequest + LabRequestItem
+DB --> API : labRequest id=7
+API --> D  : 201 Created (status: PENDING)
+
+== 5 - نتيجة التحليل ==
+
+L  -> API : GET /lab-requests
+API -> DB : SELECT WHERE status=PENDING
+DB --> API : list
+API --> L  : 200 OK
+
+L  -> API : PATCH /lab-requests/7/items/1
+note right : resultValue, unit\nreferenceRangeMin, referenceRangeMax
+API -> DB : UPDATE LabRequestItem
+DB --> API : updated
+API --> L  : 200 OK
+
+L  -> API : PATCH /lab-requests/7
+note right : status = COMPLETED
+API -> DB : UPDATE LabRequest
+DB --> API : updated
+API --> L  : 200 OK
+
+== 6 - انشاء الفاتورة ==
+
+C  -> API : POST /invoices
+API -> DB : INSERT Invoice
+DB --> API : invoice id=20
+API --> C  : 201 Created
+
+C  -> API : POST /invoices/20/items
+note right : itemType=LAB, referenceId=7, unitPrice=50
+API -> DB : INSERT InvoiceItem
+DB --> API : updated
+API --> C  : 201 Created
+
+C  -> API : POST /invoices/20/items
+note right : itemType=CONSULTATION, unitPrice=100
+API -> DB : INSERT InvoiceItem
+DB --> API : updated
+API --> C  : 201 Created
+
+== 7 - تحصيل الفاتورة ==
+
+C  -> API : PATCH /invoices/20
+note right : status=PAID, discount=10
+API -> DB : UPDATE Invoice SET finalAmount=140
+DB --> API : updated
+API --> C  : 200 OK - finalAmount: 140
+
+@enduml

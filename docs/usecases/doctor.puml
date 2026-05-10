@@ -1,0 +1,90 @@
+@startuml Doctor_UseCases
+title Use Case Diagram — DOCTOR
+
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #EEF4FF
+  BorderColor #4A90D9
+}
+skinparam package {
+  BackgroundColor #F9FBFF
+  BorderColor #AACBEF
+}
+
+actor "Doctor" as D #4A90D9
+
+' ─────────────────────────────
+package "Patients" {
+  (عرض المرضى)
+}
+
+package "Appointments" {
+  (عرض المواعيد)
+  (إضافة موعد)
+  (تعديل موعد)
+}
+
+package "Visits" {
+  (عرض الزيارات)
+  (تسجيل زيارة)
+  (تعديل زيارة)
+}
+
+package "Prescriptions" {
+  (عرض الوصفات)
+  (كتابة وصفة)
+  (تعديل وصفة)
+}
+
+package "Laboratory" {
+  (عرض أنواع التحاليل)
+  (طلب تحليل)
+  (عرض طلبات التحاليل)
+}
+
+package "Radiology" {
+  (عرض طلبات الأشعة)
+  (طلب أشعة)
+  (إضافة بنود أشعة)
+}
+
+package "Medicines" {
+  (عرض الأدوية)
+}
+
+package "Rooms & Reservations" {
+  (عرض الغرف)
+  (عرض الحجوزات)
+}
+
+' ─────────────────────────────
+D --> (عرض المرضى)
+
+D --> (عرض المواعيد)
+D --> (إضافة موعد)
+D --> (تعديل موعد)
+
+D --> (عرض الزيارات)
+D --> (تسجيل زيارة)
+D --> (تعديل زيارة)
+
+D --> (عرض الوصفات)
+D --> (كتابة وصفة)
+D --> (تعديل وصفة)
+
+D --> (عرض أنواع التحاليل)
+D --> (طلب تحليل)
+D --> (عرض طلبات التحاليل)
+
+D --> (عرض طلبات الأشعة)
+D --> (طلب أشعة)
+D --> (إضافة بنود أشعة)
+
+D --> (عرض الأدوية)
+
+D --> (عرض الغرف)
+D --> (عرض الحجوزات)
+
+@enduml

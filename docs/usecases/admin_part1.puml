@@ -1,0 +1,100 @@
+@startuml Admin_UseCases_Part1
+title Use Case Diagram — ADMIN\n(Part 1: Users · Patients · Doctors · Appointments · Visits · Prescriptions)
+
+top to bottom direction
+scale max 750 width
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam usecase {
+  BackgroundColor #FFF4EE
+  BorderColor #D9734A
+  FontSize 13
+}
+skinparam package {
+  BackgroundColor #FFFBF9
+  BorderColor #EFCBAE
+  FontSize 14
+  FontStyle bold
+}
+skinparam actor {
+  BackgroundColor #D9734A
+  FontColor #D9734A
+  FontSize 14
+  FontStyle bold
+}
+
+actor "Admin" as A #D9734A
+
+' ─────────────────────────────
+package "Users" {
+  (عرض المستخدمين)
+  (إضافة مستخدم)
+  (تعديل مستخدم)
+  (حذف مستخدم)
+}
+
+package "Patients" {
+  (عرض المرضى)
+  (إضافة مريض)
+  (تعديل مريض)
+  (حذف مريض)
+}
+
+package "Doctors" {
+  (عرض الأطباء)
+  (إضافة طبيب)
+  (تعديل طبيب)
+  (حذف طبيب)
+}
+
+package "Appointments" {
+  (عرض المواعيد)
+  (إضافة موعد)
+  (تعديل موعد)
+  (حذف موعد)
+}
+
+package "Visits" {
+  (عرض الزيارات)
+  (تسجيل زيارة)
+  (تعديل زيارة)
+}
+
+package "Prescriptions" {
+  (عرض الوصفات)
+  (كتابة وصفة)
+  (تعديل وصفة)
+}
+
+' ─────────────────────────────
+A --> (عرض المستخدمين)
+A --> (إضافة مستخدم)
+A --> (تعديل مستخدم)
+A --> (حذف مستخدم)
+
+A --> (عرض المرضى)
+A --> (إضافة مريض)
+A --> (تعديل مريض)
+A --> (حذف مريض)
+
+A --> (عرض الأطباء)
+A --> (إضافة طبيب)
+A --> (تعديل طبيب)
+A --> (حذف طبيب)
+
+A --> (عرض المواعيد)
+A --> (إضافة موعد)
+A --> (تعديل موعد)
+A --> (حذف موعد)
+
+A --> (عرض الزيارات)
+A --> (تسجيل زيارة)
+A --> (تعديل زيارة)
+
+A --> (عرض الوصفات)
+A --> (كتابة وصفة)
+A --> (تعديل وصفة)
+
+@enduml

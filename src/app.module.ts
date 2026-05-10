@@ -15,6 +15,8 @@ import { LabRequestsModule } from './lab-requests/lab-requests.module';
 import { RadiologyTestsModule } from './radiology-tests/radiology-tests.module';
 import { RadiologyRequestsModule } from './radiology-requests/radiology-requests.module';
 import { InvoicesModule } from './invoices/invoices.module';
+import { RoomsModule } from './rooms/rooms.module';
+import { RoomReservationsModule } from './room-reservations/room-reservations.module';
 
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
@@ -40,6 +42,8 @@ import { UsersModule } from './users/users.module';
     RadiologyTestsModule,
     RadiologyRequestsModule,
     InvoicesModule,
+    RoomsModule,
+    RoomReservationsModule,
     UsersModule,
   ],
   providers: [

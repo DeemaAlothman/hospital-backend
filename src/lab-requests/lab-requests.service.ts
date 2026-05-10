@@ -192,7 +192,8 @@ export class LabRequestsService {
       data: {
         resultValue: dto.resultValue,
         unit: dto.unit,
-        referenceRange: dto.referenceRange,
+        referenceRangeMin: dto.referenceRangeMin,
+        referenceRangeMax: dto.referenceRangeMax,
         resultAt: dto.resultAt ? new Date(dto.resultAt) : undefined,
         notes: dto.notes,
       },

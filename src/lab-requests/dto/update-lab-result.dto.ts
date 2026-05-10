@@ -1,4 +1,4 @@
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateLabResultDto {
   @IsOptional()
@@ -10,8 +10,12 @@ export class UpdateLabResultDto {
   unit?: string;
 
   @IsOptional()
-  @IsString()
-  referenceRange?: string;
+  @IsNumber()
+  referenceRangeMin?: number;
+
+  @IsOptional()
+  @IsNumber()
+  referenceRangeMax?: number;
 
   @IsOptional()
   @IsDateString()

@@ -1,5 +1,6 @@
 import { IsOptional, IsEnum, IsInt } from 'class-validator';
 import { Type } from 'class-transformer';
+import { InvoiceItemType } from '@prisma/client';
 
 export class QueryInvoicesDto {
   @IsOptional()
@@ -10,4 +11,8 @@ export class QueryInvoicesDto {
   @Type(() => Number)
   @IsInt()
   patientId?: number;
+
+  @IsOptional()
+  @IsEnum(InvoiceItemType)
+  itemType?: InvoiceItemType;
 }

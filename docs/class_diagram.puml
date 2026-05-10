@@ -1,0 +1,313 @@
+@startuml Class_Diagram
+title Hospital Management System — Class Diagram
+
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #EEF4FF
+  BorderColor #4A90D9
+  FontSize 12
+  HeaderBackgroundColor #4A90D9
+  HeaderFontColor #FFFFFF
+  HeaderFontStyle bold
+}
+skinparam package {
+  BackgroundColor #F5F9FF
+  BorderColor #4A90D9
+  FontStyle bold
+}
+skinparam arrow {
+  Color #4A90D9
+}
+
+' ══════════════════════════════════════
+package "Users & Auth" {
+
+  class User {
+    +id: number
+    +fullName: string
+    +email: string
+    -password: string
+    +role: UserRole
+    +phone: string
+    +createdAt: Date
+  }
+
+  class Doctor {
+    +id: number
+    +userId: number
+    +speciality: string
+  }
+
+  enum UserRole {
+    ADMIN
+    DOCTOR
+    NURSE
+    RECEPTIONIST
+    LAB_TECH
+    RADIOLOGY_TECH
+    PHARMACIST
+    CASHIER
+  }
+}
+
+' ══════════════════════════════════════
+package "Patients" {
+
+  class Patient {
+    +id: number
+    +fullName: string
+    +gender: Gender
+    +birthDate: Date
+    +phone: string
+    +bloodType: string
+    +emergencyContact: string
+  }
+
+  enum Gender {
+    MALE
+    FEMALE
+    OTHER
+  }
+}
+
+' ══════════════════════════════════════
+package "Appointments & Visits" {
+
+  class Appointment {
+    +id: number
+    +patientId: number
+    +doctorId: number
+    +date: Date
+    +status: AppointmentStatus
+    +reason: string
+    +notes: string
+  }
+
+  class Visit {
+    +id: number
+    +patientId: number
+    +doctorId: number
+    +visitDate: Date
+    +diagnosis: string
+    +chiefComplaint: string
+    +notes: string
+  }
+
+  enum AppointmentStatus {
+    SCHEDULED
+    COMPLETED
+    CANCELLED
+    NO_SHOW
+  }
+}
+
+' ══════════════════════════════════════
+package "Pharmacy" {
+
+  class Medicine {
+    +id: number
+    +name: string
+    +category: string
+    +stock: number
+    +price: Decimal
+    +expirationDate: Date
+  }
+
+  class Prescription {
+    +id: number
+    +visitId: number
+    +patientId: number
+    +doctorId: number
+    +date: Date
+    +status: PrescriptionStatus
+    +notes: string
+  }
+
+  class PrescriptionItem {
+    +id: number
+    +prescriptionId: number
+    +medicineId: number
+    +dosage: string
+    +frequency: string
+    +duration: string
+  }
+}
+
+' ══════════════════════════════════════
+package "Laboratory" {
+
+  class LabTest {
+    +id: number
+    +name: string
+    +category: string
+    +price: Decimal
+  }
+
+  class LabRequest {
+    +id: number
+    +visitId: number
+    +patientId: number
+    +doctorId: number
+    +status: LabRequestStatus
+    +createdAt: Date
+    +notes: string
+  }
+
+  class LabRequestItem {
+    +id: number
+    +requestId: number
+    +testId: number
+    +resultValue: string
+    +unit: string
+    +referenceRangeMin: number
+    +referenceRangeMax: number
+    +resultAt: Date
+  }
+}
+
+' ══════════════════════════════════════
+package "Radiology" {
+
+  class RadiologyTest {
+    +id: number
+    +name: string
+    +category: string
+    +price: Decimal
+  }
+
+  class RadiologyRequest {
+    +id: number
+    +visitId: number
+    +patientId: number
+    +doctorId: number
+    +status: RadiologyRequestStatus
+    +createdAt: Date
+  }
+
+  class RadiologyRequestItem {
+    +id: number
+    +requestId: number
+    +testId: number
+    +imageUrl: string
+    +report: string
+    +resultAt: Date
+  }
+}
+
+' ══════════════════════════════════════
+package "Invoices" {
+
+  class Invoice {
+    +id: number
+    +patientId: number
+    +status: InvoiceStatus
+    +totalAmount: Decimal
+    +discount: Decimal
+    +finalAmount: Decimal
+    +createdAt: Date
+  }
+
+  class InvoiceItem {
+    +id: number
+    +invoiceId: number
+    +itemType: InvoiceItemType
+    +referenceId: number
+    +description: string
+    +quantity: number
+    +unitPrice: Decimal
+    +subTotal: Decimal
+  }
+
+  enum InvoiceItemType {
+    CONSULTATION
+    LAB
+    RADIOLOGY
+    PHARMACY
+    ROOM
+    OTHER
+  }
+
+  enum InvoiceStatus {
+    PENDING
+    PAID
+    CANCELLED
+  }
+}
+
+' ══════════════════════════════════════
+package "Rooms & Reservations" {
+
+  class Room {
+    +id: number
+    +roomNumber: string
+    +type: RoomType
+    +floor: number
+    +status: RoomStatus
+    +nightlyRate: Decimal
+  }
+
+  class Bed {
+    +id: number
+    +roomId: number
+    +bedNumber: string
+    +status: BedStatus
+  }
+
+  class RoomReservation {
+    +id: number
+    +roomId: number
+    +bedId: number
+    +patientId: number
+    +doctorId: number
+    +visitId: number
+    +reservationType: ReservationType
+    +status: ReservationStatus
+    +startDate: Date
+    +endDate: Date
+  }
+}
+
+' ══════════════════════════════════════
+' RELATIONSHIPS
+' ══════════════════════════════════════
+
+User "1" --o "0..1" Doctor : has
+
+Patient "1" --o "many" Appointment
+Doctor  "1" --o "many" Appointment
+
+Patient "1" --o "many" Visit
+Doctor  "1" --o "many" Visit
+
+Visit        "1" --o "many" Prescription
+Prescription "1" --o "many" PrescriptionItem
+Medicine     "1" --o "many" PrescriptionItem
+
+Visit      "1" --o "many" LabRequest
+LabRequest "1" --o "many" LabRequestItem
+LabTest    "1" --o "many" LabRequestItem
+
+Visit            "1" --o "many" RadiologyRequest
+RadiologyRequest "1" --o "many" RadiologyRequestItem
+RadiologyTest    "1" --o "many" RadiologyRequestItem
+
+Patient "1" --o "many" Invoice
+Invoice "1" --o "many" InvoiceItem
+
+Room "1" --o "many" Bed
+Room "1" --o "many" RoomReservation
+Bed  "1" --o "many" RoomReservation
+
+InvoiceItem ..> LabRequest       : "<<logical>>"
+InvoiceItem ..> RadiologyRequest : "<<logical>>"
+InvoiceItem ..> Prescription     : "<<logical>>"
+InvoiceItem ..> RoomReservation  : "<<logical>>"
+
+User    --> UserRole    : uses
+Patient --> Gender      : has
+Appointment --> AppointmentStatus : has
+Invoice --> InvoiceStatus    : has
+InvoiceItem --> InvoiceItemType : has
+
+@enduml
