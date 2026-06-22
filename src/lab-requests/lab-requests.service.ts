@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -55,7 +55,7 @@ export class LabRequestsService {
         },
         include: {
           patient: true,
-          doctor: { include: { user: true } },
+          doctor: { include: { user: { omit: { password: true } } } },
           visit: true,
           items: { include: { test: true } },
         },
@@ -129,7 +129,7 @@ export class LabRequestsService {
       orderBy: { createdAt: 'desc' },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         visit: true,
         items: { include: { test: true } },
       },
@@ -145,7 +145,7 @@ export class LabRequestsService {
       where: { id },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         visit: true,
         items: { include: { test: true } },
       },
@@ -164,7 +164,7 @@ export class LabRequestsService {
       },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         visit: true,
         items: { include: { test: true } },
       },
@@ -256,7 +256,7 @@ export class LabRequestsService {
         },
         include: {
           patient: true,
-          doctor: { include: { user: true } },
+          doctor: { include: { user: { omit: { password: true } } } },
           visit: true,
           items: { include: { test: true } },
         },
@@ -323,10 +323,11 @@ export class LabRequestsService {
       orderBy: { createdAt: 'desc' },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         visit: true,
         items: { include: { test: true } },
       },
     });
   }
 }
+

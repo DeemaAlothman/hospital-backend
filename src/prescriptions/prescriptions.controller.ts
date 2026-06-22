@@ -26,7 +26,7 @@ import { UserRole } from '@prisma/client';
 export class PrescriptionsController {
   constructor(private readonly prescriptionsService: PrescriptionsService) {}
 
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
+@Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PHARMACIST)  
   @Post()
   create(@Body() dto: CreatePrescriptionDto) {
     return this.prescriptionsService.create(dto);

@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   Injectable,
@@ -23,7 +23,7 @@ export class VisitsService {
 
     const doctor = await this.prisma.doctor.findUnique({
       where: { id: dto.doctorId },
-      include: { user: true },
+      include: { user: { omit: { password: true } } },
     });
     if (!doctor) throw new NotFoundException('Doctor not found');
 
@@ -48,7 +48,7 @@ export class VisitsService {
         },
         include: {
           patient: true,
-          doctor: { include: { user: true } },
+          doctor: { include: { user: { omit: { password: true } } } },
         },
       });
 
@@ -102,7 +102,7 @@ export class VisitsService {
       orderBy: { visitDate: 'desc' },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
   }
@@ -116,7 +116,7 @@ export class VisitsService {
       where: { id },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         // لاحقاً رح ينعبي:
         prescriptions: { include: { items: { include: { medicine: true } } } },
         labRequests: { include: { items: { include: { test: true } } } },
@@ -149,7 +149,7 @@ export class VisitsService {
       },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
   }
@@ -176,7 +176,7 @@ export class VisitsService {
 
     const doctor = await this.prisma.doctor.findUnique({
       where: { userId },
-      include: { user: true },
+      include: { user: { omit: { password: true } } },
     });
     if (!doctor)
       throw new NotFoundException('Doctor profile not found for this user');
@@ -202,7 +202,7 @@ export class VisitsService {
         },
         include: {
           patient: true,
-          doctor: { include: { user: true } },
+          doctor: { include: { user: { omit: { password: true } } } },
         },
       });
 
@@ -239,3 +239,4 @@ export class VisitsService {
     return result;
   }
 }
+

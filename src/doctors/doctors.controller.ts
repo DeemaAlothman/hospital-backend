@@ -45,6 +45,13 @@ export class DoctorsController {
     return this.doctorsService.getMyVisits(user.userId);
   }
 
+  // المستخدمين role=DOCTOR اللي ما عندهم اختصاص بعد
+  @Roles(UserRole.ADMIN)
+  @Get('unassigned')
+  findUnassigned() {
+    return this.doctorsService.findUnassigned();
+  }
+
   // قراءة دكتور واحد
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR, UserRole.NURSE)
   @Get(':id')

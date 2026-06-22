@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryUsersDto } from './dto/query-users.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -64,6 +66,19 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async resetPassword(id: number, dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+
+    const hashed = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id },
+      data: { password: hashed },
+    });
+
+    return { message: 'تم إعادة تعيين كلمة السر بنجاح' };
   }
 
   async getStatsByRole() {

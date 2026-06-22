@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -57,7 +57,7 @@ export class PrescriptionsService {
         },
         include: {
           patient: true,
-          doctor: { include: { user: true } },
+          doctor: { include: { user: { omit: { password: true } } } },
           visit: true,
           items: { include: { medicine: true } },
         },
@@ -130,7 +130,7 @@ export class PrescriptionsService {
       orderBy: { date: 'desc' },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         visit: true,
         items: { include: { medicine: true } },
       },
@@ -142,7 +142,7 @@ export class PrescriptionsService {
       where: { id },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         visit: true,
         items: { include: { medicine: true } },
       },
@@ -162,7 +162,7 @@ export class PrescriptionsService {
       },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
         visit: true,
         items: { include: { medicine: true } },
       },
@@ -228,7 +228,7 @@ export class PrescriptionsService {
         },
         include: {
           patient: true,
-          doctor: { include: { user: true } },
+          doctor: { include: { user: { omit: { password: true } } } },
           visit: true,
           items: { include: { medicine: true } },
         },
@@ -283,3 +283,4 @@ export class PrescriptionsService {
     });
   }
 }
+

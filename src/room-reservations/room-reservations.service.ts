@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   Injectable,
@@ -19,7 +19,7 @@ export class RoomReservationsService {
     room: true,
     bed: true,
     patient: true,
-    doctor: { include: { user: true } },
+    doctor: { include: { user: { omit: { password: true } } } },
   } as const;
 
   async findOne(id: number) {
@@ -71,7 +71,7 @@ export class RoomReservationsService {
       where: overlapWhere,
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
 
@@ -279,3 +279,4 @@ export class RoomReservationsService {
     });
   }
 }
+

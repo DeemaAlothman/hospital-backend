@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -8,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserRole } from '@prisma/client';
 
 @Injectable()
@@ -108,6 +110,22 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const isValid = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!isValid) throw new BadRequestException('كلمة السر الحالية غير صحيحة');
+
+    const hashed = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashed },
+    });
+
+    return { message: 'تم تغيير كلمة السر بنجاح' };
   }
 
   private signToken(userId: number, email: string, role: UserRole) {

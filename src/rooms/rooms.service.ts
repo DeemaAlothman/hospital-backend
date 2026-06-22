@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   Injectable,
@@ -56,7 +56,7 @@ export class RoomsService {
           where: { status: { in: ['RESERVED', 'ACTIVE'] } },
           include: {
             patient: true,
-            doctor: { include: { user: true } },
+            doctor: { include: { user: { omit: { password: true } } } },
           },
         },
       },
@@ -119,3 +119,4 @@ export class RoomsService {
     });
   }
 }
+

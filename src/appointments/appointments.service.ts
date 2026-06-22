@@ -27,6 +27,8 @@ export class AppointmentsService {
     const dateObj = new Date(dto.date);
     if (isNaN(dateObj.getTime())) throw new BadRequestException('Invalid date');
 
+    await this.checkDoctorConflict(dto.doctorId, dateObj);
+
     return this.prisma.appointment.create({
       data: {
         patientId: dto.patientId,
@@ -38,7 +40,7 @@ export class AppointmentsService {
       },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
   }
@@ -55,7 +57,7 @@ export class AppointmentsService {
       orderBy: { date: 'asc' },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
   }
@@ -65,7 +67,7 @@ export class AppointmentsService {
       where: { id },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
 
@@ -99,6 +101,14 @@ export class AppointmentsService {
         throw new BadRequestException('Invalid date');
     }
 
+    // لو تغير الدكتور أو الوقت، تحقق من التعارض (استثنِ الموعد الحالي)
+    if (dateObj || dto.doctorId) {
+      const current = await this.findOne(id);
+      const checkDoctorId = dto.doctorId ?? current.doctorId;
+      const checkDate = dateObj ?? current.date;
+      await this.checkDoctorConflict(checkDoctorId, checkDate, id);
+    }
+
     return this.prisma.appointment.update({
       where: { id },
       data: {
@@ -111,7 +121,7 @@ export class AppointmentsService {
       },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
   }
@@ -119,5 +129,27 @@ export class AppointmentsService {
   async remove(id: number) {
     await this.findOne(id);
     return this.prisma.appointment.delete({ where: { id } });
+  }
+
+  // يتحقق أن الدكتور ما عنده موعد آخر في نفس الوقت (±30 دقيقة)
+  private async checkDoctorConflict(doctorId: number, date: Date, excludeId?: number) {
+    const window = 30 * 60 * 1000; // 30 دقيقة بالميلي ثانية
+    const from = new Date(date.getTime() - window);
+    const to   = new Date(date.getTime() + window);
+
+    const conflict = await this.prisma.appointment.findFirst({
+      where: {
+        doctorId,
+        status: { notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW] },
+        date: { gte: from, lte: to },
+        ...(excludeId ? { NOT: { id: excludeId } } : {}),
+      },
+    });
+
+    if (conflict) {
+      throw new BadRequestException(
+        `الدكتور عنده موعد آخر في نفس الوقت (${conflict.date.toISOString()})`,
+      );
+    }
   }
 }

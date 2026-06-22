@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -13,44 +13,57 @@ export class DoctorsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateDoctorDto) {
-    // 1) تأكد أن الـ user موجود
     const user = await this.prisma.user.findUnique({
       where: { id: dto.userId },
     });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
-    // 2) منع التكرار (لأن userId unique في Doctor)
-    const existing = await this.prisma.doctor.findUnique({
-      where: { userId: dto.userId },
-    });
-    if (existing) {
-      throw new BadRequestException('This user is already a doctor');
-    }
-
-    // 3) (اختياري) اجبار أن role المستخدم DOCTOR
-    // إذا ما بدك هذا الشرط، احذفيه.
-    if (user.role !== UserRole.DOCTOR) {
+    if (user.role !== UserRole.DOCTOR)
       throw new BadRequestException('User role must be DOCTOR');
-    }
 
-    return this.prisma.doctor.create({
-      data: {
-        userId: dto.userId,
-        speciality: dto.speciality,
-      },
-      include: {
-        user: true,
-      },
+    // upsert: إذا عنده doctor record بنحدث الاختصاص، إذا ما عنده بنضيفه
+    return this.prisma.doctor.upsert({
+      where: { userId: dto.userId },
+      update: { speciality: dto.speciality },
+      create: { userId: dto.userId, speciality: dto.speciality },
+      include: { user: { omit: { password: true } } },
     });
   }
 
   findAll() {
     return this.prisma.doctor.findMany({
-      include: { user: true },
+      include: { user: { omit: { password: true } } },
       orderBy: { id: 'desc' },
     });
+  }
+
+  // كل المستخدمين role=DOCTOR اللي ما عندهم اختصاص بعد (سواء ما عندهم doctor record أو عندهم بس speciality فاضي)
+  async findUnassigned() {
+    // الحالة 1: users مع role=DOCTOR بس ما عندهم Doctor record أصلاً
+    const usersWithoutDoctorRecord = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.DOCTOR,
+        doctor: { is: null },
+      },
+      select: { id: true, fullName: true, email: true, phone: true },
+    });
+
+    // الحالة 2: عندهم Doctor record بس speciality فاضي
+    const doctorsWithoutSpeciality = await this.prisma.doctor.findMany({
+      where: { speciality: null },
+      include: {
+        user: {
+          select: { id: true, fullName: true, email: true, phone: true },
+        },
+      },
+    });
+
+    const fromCase2 = doctorsWithoutSpeciality.map((d) => ({
+      ...d.user,
+      doctorId: d.id,
+    }));
+
+    return [...usersWithoutDoctorRecord, ...fromCase2];
   }
 
   async findOne(id: number) {
@@ -60,7 +73,7 @@ export class DoctorsService {
 
     const doctor = await this.prisma.doctor.findUnique({
       where: { id },
-      include: { user: true },
+      include: { user: { omit: { password: true } } },
     });
     if (!doctor) {
       throw new NotFoundException('Doctor not found');
@@ -76,7 +89,7 @@ export class DoctorsService {
       data: {
         speciality: dto.speciality,
       },
-      include: { user: true },
+      include: { user: { omit: { password: true } } },
     });
   }
 
@@ -112,7 +125,7 @@ export class DoctorsService {
       orderBy: { visitDate: 'desc' },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
   }
@@ -131,8 +144,9 @@ export class DoctorsService {
       orderBy: { visitDate: 'desc' },
       include: {
         patient: true,
-        doctor: { include: { user: true } },
+        doctor: { include: { user: { omit: { password: true } } } },
       },
     });
   }
 }
+
