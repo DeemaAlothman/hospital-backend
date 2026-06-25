@@ -27,7 +27,7 @@ import { UserRole } from '@prisma/client';
 export class LabRequestsController {
   constructor(private readonly service: LabRequestsService) {}
 
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.NURSE, UserRole.LAB_TECH)
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.LAB_TECH)
   @Post()
   create(@Body() dto: CreateLabRequestDto) {
     return this.service.create(dto);
@@ -63,7 +63,7 @@ export class LabRequestsController {
     return this.service.update(+id, dto);
   }
 
-  @Roles(UserRole.ADMIN, UserRole.LAB_TECH)
+  @Roles(UserRole.ADMIN, UserRole.LAB_TECH, UserRole.NURSE)
   @Patch(':requestId/items/:itemId')
   updateResult(
     @Param('requestId') requestId: string,

@@ -34,13 +34,13 @@ export class RadiologyRequestsController {
   }
 
   @Get()
-  @Roles('RADIOLOGY_TECH', 'DOCTOR', 'ADMIN')
+  @Roles('RADIOLOGY_TECH', 'DOCTOR', 'ADMIN', 'NURSE')
   findAll(@Query() query: QueryRadiologyRequestsDto) {
     return this.radiologyRequestsService.findAll(query);
   }
 
   @Get(':id')
-  @Roles('RADIOLOGY_TECH', 'DOCTOR', 'ADMIN')
+  @Roles('RADIOLOGY_TECH', 'DOCTOR', 'ADMIN', 'NURSE')
   findOne(@Param('id') id: string) {
     return this.radiologyRequestsService.findOne(+id);
   }
@@ -52,7 +52,7 @@ export class RadiologyRequestsController {
   }
 
   @Post(':id/results')
-  @Roles('RADIOLOGY_TECH', 'ADMIN')
+  @Roles('RADIOLOGY_TECH', 'ADMIN', 'NURSE')
   submitResults(@Param('id') id: string, @Body() submitResultDto: SubmitRadiologyResultDto) {
     return this.radiologyRequestsService.submitResults(+id, submitResultDto);
   }

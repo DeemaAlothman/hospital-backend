@@ -51,8 +51,8 @@ export class PatientsController {
     return this.patientsService.update(+id, updatePatientDto);
   }
 
-  // حذف مريض: ADMIN + RECEPTIONIST + NURSE
-  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.NURSE)
+  // حذف مريض: ADMIN + RECEPTIONIST
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.patientsService.remove(+id);
