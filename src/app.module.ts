@@ -21,6 +21,7 @@ import { RoomReservationsModule } from './room-reservations/room-reservations.mo
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { UsersModule } from './users/users.module';
+ import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     RoomsModule,
     RoomReservationsModule,
     UsersModule,
+    DashboardModule,
   ],
   providers: [
     {

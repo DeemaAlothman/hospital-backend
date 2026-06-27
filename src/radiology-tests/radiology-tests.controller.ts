@@ -12,7 +12,7 @@ export class RadiologyTestsController {
   constructor(private readonly radiologyTestsService: RadiologyTestsService) {}
 
   @Get('tests')
-  @Roles('ADMIN', 'RADIOLOGY_TECH', 'DOCTOR', 'CASHIER')
+  @Roles('ADMIN', 'RADIOLOGY_TECH', 'DOCTOR', 'CASHIER', 'NURSE')
   findAll() {
     return this.radiologyTestsService.findAll();
   }
@@ -24,7 +24,7 @@ export class RadiologyTestsController {
   }
 
   @Get('tests/:id')
-  @Roles('ADMIN', 'RADIOLOGY_TECH', 'DOCTOR')
+  @Roles('ADMIN', 'RADIOLOGY_TECH', 'DOCTOR', 'NURSE')
   findOne(@Param('id') id: string) {
     return this.radiologyTestsService.findOne(+id);
   }
